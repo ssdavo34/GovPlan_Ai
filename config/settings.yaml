@@ -1,0 +1,97 @@
+# GovPlan_AI Configuration
+
+app:
+  name: "GovPlan_AI"
+  version: "1.0.0"
+  description: "정부지원사업 공고 자동 수집 및 AI 기반 사업계획서 생성 시스템"
+  debug: true
+
+database:
+  pool_size: 20
+  max_overflow: 10
+  pool_timeout: 30
+  pool_recycle: 3600
+
+crawler:
+  user_agent: "GovPlanAI/1.0 (Compatible; Government Grant Aggregator)"
+  delay_seconds: 1
+  max_retries: 3
+  timeout: 30
+  concurrent_requests: 5
+
+  # Schedule (cron format)
+  schedule:
+    hour: 9
+    minute: 0
+    timezone: "Asia/Seoul"
+
+ai:
+  default_model: "claude-3-5-sonnet-20241022"
+  max_tokens: 4096
+  temperature: 0.7
+  timeout: 60
+  retry_attempts: 3
+
+  # Token limits for different operations
+  token_limits:
+    proposal_generation: 4096
+    summary_generation: 2048
+    keyword_extraction: 1024
+
+matching:
+  # Matching score thresholds
+  thresholds:
+    high_match: 80
+    medium_match: 60
+    low_match: 40
+
+  # Weights for scoring algorithm
+  weights:
+    company_type: 30
+    industry: 25
+    region: 15
+    tech_field: 20
+    budget: 10
+
+notification:
+  email:
+    enabled: true
+    batch_size: 50
+    retry_count: 3
+
+  slack:
+    enabled: false
+    channel: "#gov-grants"
+
+  # Notification triggers
+  triggers:
+    new_grant: true
+    high_match: true
+    deadline_approaching: true
+
+  # Deadline alerts (days before)
+  deadline_alerts: [7, 3, 1]
+
+storage:
+  max_file_size_mb: 10
+  allowed_extensions: [".pdf", ".docx", ".doc"]
+  document_retention_days: 365
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file_rotation: "midnight"
+  backup_count: 30
+
+rate_limiting:
+  api_requests_per_minute: 60
+  crawler_requests_per_second: 1
+
+security:
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+  allowed_hosts:
+    - "localhost"
+    - "127.0.0.1"
+  session_timeout_minutes: 60
