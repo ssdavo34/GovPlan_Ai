@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 from backend.core.config import settings
 from backend.core.database import db_manager
-from backend.api import projects, companies, proposals
+from backend.api import projects, companies, proposals, matching
 
 
 @asynccontextmanager
@@ -67,6 +67,12 @@ app.include_router(
     proposals.router,
     prefix=f"{settings.api_prefix}/proposals",
     tags=["proposals"]
+)
+
+app.include_router(
+    matching.router,
+    prefix=f"{settings.api_prefix}/matching",
+    tags=["matching"]
 )
 
 

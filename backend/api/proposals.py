@@ -2,13 +2,18 @@
 사업계획서 생성 관련 API
 """
 from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi.responses import FileResponse
 from typing import List, Optional, Dict
 import asyncpg
 from datetime import datetime
 from pydantic import BaseModel
+from pathlib import Path
+import tempfile
 
 from backend.core.database import get_db
 from backend.services.ai.proposal_generator import ProposalGenerator
+from backend.services.document.pdf_generator import PDFGenerator
+from backend.services.document.docx_generator import DOCXGenerator
 
 
 router = APIRouter()
@@ -392,4 +397,129 @@ async def regenerate_section(
         raise HTTPException(
             status_code=500,
             detail=f"섹션 재생성 중 오류 발생: {str(e)}"
+        )
+
+@router.get("/{proposal_id}/download/pdf")
+async def download_pdf(
+    proposal_id: int,
+    conn: asyncpg.Connection = Depends(get_db)
+):
+    """
+    사업계획서 PDF 다운로드
+
+    생성된 사업계획서를 PDF 형식으로 다운로드합니다.
+    """
+
+    # 사업계획서 조회
+    query = """
+        SELECT
+            p.*,
+            c.company_name, c.business_number, c.industry_name, c.region,
+            c.employee_count, c.technology_fields,
+            pr.project_name, pr.agency, pr.support_type, pr.support_amount
+        FROM proposals p
+        JOIN companies c ON p.company_id = c.id
+        JOIN gov_support_projects pr ON p.project_id = pr.id
+        WHERE p.id = $1
+    """
+
+    proposal = await conn.fetchrow(query, proposal_id)
+
+    if not proposal:
+        raise HTTPException(status_code=404, detail="사업계획서를 찾을 수 없습니다")
+
+    try:
+        # 데이터 준비
+        proposal_data = dict(proposal)
+
+        # 임시 파일 생성
+        with tempfile.NamedTemporaryFile(mode='w+b', suffix='.pdf', delete=False) as tmp_file:
+            output_path = tmp_file.name
+
+        # PDF 생성
+        pdf_generator = PDFGenerator(use_korean_font=True)
+        pdf_generator.generate(
+            proposal_data=proposal_data,
+            output_path=output_path,
+            include_cover=True
+        )
+
+        # 파일명 생성
+        filename = f"{proposal['company_name']}_{proposal['project_name'][:30]}_사업계획서.pdf"
+        filename = filename.replace(' ', '_').replace('/', '_')
+
+        # 파일 응답
+        return FileResponse(
+            path=output_path,
+            media_type='application/pdf',
+            filename=filename
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"PDF 생성 중 오류 발생: {str(e)}"
+        )
+
+
+@router.get("/{proposal_id}/download/docx")
+async def download_docx(
+    proposal_id: int,
+    conn: asyncpg.Connection = Depends(get_db)
+):
+    """
+    사업계획서 DOCX 다운로드
+
+    생성된 사업계획서를 DOCX (워드) 형식으로 다운로드합니다.
+    """
+
+    # 사업계획서 조회
+    query = """
+        SELECT
+            p.*,
+            c.company_name, c.business_number, c.industry_name, c.region,
+            c.employee_count, c.technology_fields,
+            pr.project_name, pr.agency, pr.support_type, pr.support_amount
+        FROM proposals p
+        JOIN companies c ON p.company_id = c.id
+        JOIN gov_support_projects pr ON p.project_id = pr.id
+        WHERE p.id = $1
+    """
+
+    proposal = await conn.fetchrow(query, proposal_id)
+
+    if not proposal:
+        raise HTTPException(status_code=404, detail="사업계획서를 찾을 수 없습니다")
+
+    try:
+        # 데이터 준비
+        proposal_data = dict(proposal)
+
+        # 임시 파일 생성
+        with tempfile.NamedTemporaryFile(mode='w+b', suffix='.docx', delete=False) as tmp_file:
+            output_path = tmp_file.name
+
+        # DOCX 생성
+        docx_generator = DOCXGenerator()
+        docx_generator.generate(
+            proposal_data=proposal_data,
+            output_path=output_path,
+            include_cover=True
+        )
+
+        # 파일명 생성
+        filename = f"{proposal['company_name']}_{proposal['project_name'][:30]}_사업계획서.docx"
+        filename = filename.replace(' ', '_').replace('/', '_')
+
+        # 파일 응답
+        return FileResponse(
+            path=output_path,
+            media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            filename=filename
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"DOCX 생성 중 오류 발생: {str(e)}"
         )
