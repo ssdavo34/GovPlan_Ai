@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사업계획서 - GovPlan_AI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <!-- 네비게이션 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-graph-up-arrow"></i> GovPlan_AI
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">대시보드</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/projects">공고 검색</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/matching">매칭 결과</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/proposals">사업계획서</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/docs" target="_blank">API 문서</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 메인 컨텐츠 -->
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-12 mb-4">
+                <h2><i class="bi bi-file-earmark-text"></i> 사업계획서 관리</h2>
+                <p class="text-muted">AI가 자동으로 생성한 사업계획서를 관리합니다</p>
+            </div>
+        </div>
+
+        <!-- 신규 생성 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-plus-circle"></i> 신규 사업계획서 생성</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="newCompanySelect" class="form-label">기업 선택</label>
+                                <select class="form-select" id="newCompanySelect">
+                                    <option value="">기업을 선택하세요</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="newProjectSelect" class="form-label">지원사업 선택</label>
+                                <select class="form-select" id="newProjectSelect">
+                                    <option value="">지원사업을 선택하세요</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button class="btn btn-primary w-100" onclick="generateProposal()">
+                                    <i class="bi bi-magic"></i> AI로 생성하기
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 사업계획서 목록 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-list-ul"></i> 사업계획서 목록</h5>
+                        <div>
+                            <select class="form-select form-select-sm" id="statusFilter" onchange="loadProposals()">
+                                <option value="">전체</option>
+                                <option value="draft">작성중</option>
+                                <option value="completed" selected>완료</option>
+                                <option value="submitted">제출완료</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="proposals-list">
+                            <div class="text-center p-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>GovPlan_AI</h6>
+                    <p class="text-muted small">정부지원사업 자동화 플랫폼</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-muted small">
+                        <a href="/docs" target="_blank" class="text-decoration-none">API 문서</a> |
+                        <a href="https://github.com/ssdavo34/GovPlan_Ai" target="_blank" class="text-decoration-none">GitHub</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api/v1';
+
+        // 페이지 로드 시
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCompanies();
+            loadProjects();
+            loadProposals();
+        });
+
+        // 기업 목록 로드
+        async function loadCompanies() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/companies?limit=100`);
+                const data = await response.json();
+
+                const select = document.getElementById('newCompanySelect');
+                select.innerHTML = '<option value="">기업을 선택하세요</option>';
+
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach(company => {
+                        const option = document.createElement('option');
+                        option.value = company.id;
+                        option.textContent = company.company_name;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('기업 목록 로드 실패:', error);
+            }
+        }
+
+        // 지원사업 목록 로드
+        async function loadProjects() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/projects?limit=100&status=active`);
+                const data = await response.json();
+
+                const select = document.getElementById('newProjectSelect');
+                select.innerHTML = '<option value="">지원사업을 선택하세요</option>';
+
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach(project => {
+                        const option = document.createElement('option');
+                        option.value = project.id;
+                        option.textContent = project.project_name;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('지원사업 목록 로드 실패:', error);
+            }
+        }
+
+        // 사업계획서 생성
+        async function generateProposal() {
+            const companyId = document.getElementById('newCompanySelect').value;
+            const projectId = document.getElementById('newProjectSelect').value;
+
+            if (!companyId || !projectId) {
+                alert('기업과 지원사업을 모두 선택하세요');
+                return;
+            }
+
+            if (!confirm('사업계획서를 AI로 생성하시겠습니까? 수 분이 소요될 수 있습니다.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/proposals/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        company_id: parseInt(companyId),
+                        project_id: parseInt(projectId)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('사업계획서 생성이 시작되었습니다. 완료되면 목록에 표시됩니다.');
+                    setTimeout(() => {
+                        loadProposals();
+                    }, 3000);
+                } else {
+                    alert('생성 실패: ' + (data.detail || '알 수 없는 오류'));
+                }
+
+            } catch (error) {
+                console.error('사업계획서 생성 실패:', error);
+                alert('사업계획서 생성에 실패했습니다');
+            }
+        }
+
+        // 사업계획서 목록 로드
+        async function loadProposals() {
+            const status = document.getElementById('statusFilter').value;
+            const container = document.getElementById('proposals-list');
+
+            try {
+                let url = `${API_BASE_URL}/proposals?limit=50`;
+                if (status) url += `&status=${status}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (!data.items || data.items.length === 0) {
+                    container.innerHTML = '<p class="text-muted text-center">사업계획서가 없습니다</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                const table = document.createElement('table');
+                table.className = 'table table-hover';
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>번호</th>
+                            <th>기업명</th>
+                            <th>지원사업</th>
+                            <th>상태</th>
+                            <th>생성일</th>
+                            <th>다운로드</th>
+                        </tr>
+                    </thead>
+                    <tbody id="proposals-tbody"></tbody>
+                `;
+
+                container.appendChild(table);
+
+                const tbody = document.getElementById('proposals-tbody');
+
+                data.items.forEach((proposal, index) => {
+                    const tr = document.createElement('tr');
+
+                    let statusBadge = '';
+                    switch(proposal.status) {
+                        case 'draft':
+                            statusBadge = '<span class="badge bg-secondary">작성중</span>';
+                            break;
+                        case 'completed':
+                            statusBadge = '<span class="badge bg-success">완료</span>';
+                            break;
+                        case 'submitted':
+                            statusBadge = '<span class="badge bg-primary">제출완료</span>';
+                            break;
+                        default:
+                            statusBadge = '<span class="badge bg-secondary">알 수 없음</span>';
+                    }
+
+                    const createdDate = proposal.created_at ?
+                        new Date(proposal.created_at).toLocaleDateString('ko-KR') : 'N/A';
+
+                    tr.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${proposal.company_name || 'N/A'}</td>
+                        <td>${proposal.project_name || 'N/A'}</td>
+                        <td>${statusBadge}</td>
+                        <td>${createdDate}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="${API_BASE_URL}/proposals/${proposal.id}/download/pdf" class="btn btn-sm btn-outline-danger" target="_blank">
+                                    <i class="bi bi-file-pdf"></i> PDF
+                                </a>
+                                <a href="${API_BASE_URL}/proposals/${proposal.id}/download/docx" class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="bi bi-file-word"></i> DOCX
+                                </a>
+                            </div>
+                        </td>
+                    `;
+
+                    tbody.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error('사업계획서 목록 로드 실패:', error);
+                container.innerHTML = '<p class="text-danger text-center">목록을 불러오는데 실패했습니다</p>';
+            }
+        }
+    </script>
+</body>
+</html>
