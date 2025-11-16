@@ -1,0 +1,113 @@
+# 크롤링 대상 사이트 설정
+
+targets:
+  # K-Startup (중소벤처기업부)
+  - name: "k-startup"
+    display_name: "K-Startup"
+    base_url: "https://www.k-startup.go.kr"
+    list_url: "https://www.k-startup.go.kr/common/announcement/list"
+    enabled: true
+    method: "beautifulsoup"
+    priority: 1
+    selectors:
+      list_item: "div.board-list tbody tr"
+      title: "td.subject a"
+      link: "td.subject a"
+      date: "td.date"
+      category: "td.category"
+    pagination:
+      enabled: true
+      max_pages: 5
+      param_name: "page"
+    headers:
+      User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+  # 기업마당 (정부24 연계)
+  - name: "bizinfo"
+    display_name: "기업마당"
+    base_url: "https://www.bizinfo.go.kr"
+    list_url: "https://www.bizinfo.go.kr/see/seea/selectSEEA140List.do"
+    enabled: true
+    method: "selenium"
+    priority: 2
+    selectors:
+      list_item: "table.board-list tbody tr"
+      title: "td.subject"
+      link: "td.subject a"
+      period: "td.period"
+      agency: "td.agency"
+    pagination:
+      enabled: true
+      max_pages: 10
+      type: "click"
+      next_button: "a.next"
+
+  # 중소벤처24
+  - name: "smes"
+    display_name: "중소벤처24"
+    base_url: "https://www.smes.go.kr"
+    list_url: "https://www.smes.go.kr/bizNotice/list"
+    enabled: true
+    method: "playwright"
+    priority: 3
+    selectors:
+      list_item: "div.notice-list li"
+      title: "div.title a"
+      link: "div.title a"
+      date: "span.date"
+      status: "span.status"
+    wait_for: "div.notice-list"
+    pagination:
+      enabled: true
+      max_pages: 5
+
+  # 소상공인24
+  - name: "sbiz"
+    display_name: "소상공인24"
+    base_url: "https://www.sbiz.or.kr"
+    list_url: "https://www.sbiz.or.kr/sup/suplist.do"
+    enabled: true
+    method: "beautifulsoup"
+    priority: 4
+    selectors:
+      list_item: "table tbody tr"
+      title: "td.title a"
+      link: "td.title a"
+      period: "td.period"
+    pagination:
+      enabled: true
+      max_pages: 5
+
+  # 추가 사이트 (향후 확장)
+  - name: "kreport"
+    display_name: "과학기술정보통신부 R&D"
+    base_url: "https://www.k-report.go.kr"
+    enabled: false
+    priority: 5
+
+# 크롤링 공통 설정
+common:
+  request_delay: 1  # seconds
+  timeout: 30
+  max_retries: 3
+  verify_ssl: true
+
+  # 제외할 키워드 (불필요한 공고 필터링)
+  exclude_keywords:
+    - "마감"
+    - "종료"
+    - "취소"
+
+  # 필수 포함 키워드 (옵션)
+  include_keywords:
+    - "지원"
+    - "모집"
+    - "신청"
+
+# 에러 알림 설정
+error_notification:
+  enabled: true
+  threshold: 3  # 연속 실패 횟수
+  channels:
+    - email
+    - slack
