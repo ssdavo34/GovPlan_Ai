@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Temp files
+*.log
+*.tmp
+tmp/
+temp/
+
+# Data
+uploads/
+documents/
+logs/
+*.db
+*.sqlite
+
+# Environment
+.env
+.env.local
+.env.*.local

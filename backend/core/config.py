@@ -36,6 +36,14 @@ class Settings(BaseSettings):
     anthropic_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
 
+    # 알림 설정
+    smtp_server: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: Optional[str] = None
+    smtp_password: Optional[str] = None
+    from_email: Optional[str] = None
+    slack_webhook_url: Optional[str] = None
+
     # 크롤링 설정
     crawler_user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
     crawler_delay: float = 1.0  # 요청 간 지연 시간 (초)
