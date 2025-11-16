@@ -60,6 +60,7 @@ class Settings(BaseSettings):
     secret_key: str = "your-secret-key-change-this-in-production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24  # 24시간
+    refresh_token_expire_days: int = 7  # 7일
 
     # 로깅 설정
     log_level: str = "INFO"

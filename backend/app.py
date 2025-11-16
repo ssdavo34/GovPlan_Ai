@@ -11,7 +11,7 @@ from pathlib import Path
 
 from backend.core.config import settings
 from backend.core.database import db_manager
-from backend.api import projects, companies, proposals, matching
+from backend.api import projects, companies, proposals, matching, auth
 
 
 @asynccontextmanager
@@ -88,6 +88,12 @@ app.include_router(
     matching.router,
     prefix=f"{settings.api_prefix}/matching",
     tags=["matching"]
+)
+
+app.include_router(
+    auth.router,
+    prefix=f"{settings.api_prefix}/auth",
+    tags=["auth"]
 )
 
 
